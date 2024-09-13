@@ -15,8 +15,16 @@
 		"AI",
 		"Chat"
 	],
-	"activationEvents": [],
+	"enabledApiProposals": [
+		"chatProvider"
+	],
+	"activationEvents": ["onStartupFinished"],
 	"contributes": {
+		"languageModels":[
+			{
+				"vendor": "Anthropic"
+			}
+		],
 		"chatParticipants": [
 			{
 				"id": "vscode-samples.claude",
@@ -37,7 +45,7 @@
 		"watch": "tsc -watch -p ./"
 	},
 	"dependencies": {
-		"@anthropic-ai/sdk": "^1.0.0", // Ensure this version matches the latest available
+		"@anthropic-ai/sdk": "^1.0.0", 
 		"dotenv": "^10.0.0",
 		"openai": "^4.60.0"
 	},

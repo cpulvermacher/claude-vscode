@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-// import * as dotenv from 'dotenv';
-import * as path from 'path';
 import { Anthropic } from '@anthropic-ai/sdk'; // Import Anthropic SDK
 
 const CLAUDE_PARTICIPANT_ID = 'cpulvermacher.claude';
@@ -48,45 +46,6 @@ async function initAnthropicClient() {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-    // Load .env file from the extension's root directory
-    //   dotenv.config({ path: path.join(context.extensionPath, ".env") });
-
-    const handler: vscode.ChatRequestHandler = async (
-        request: vscode.ChatRequest,
-        context: vscode.ChatContext,
-        stream: vscode.ChatResponseStream,
-        token: vscode.CancellationToken
-    ): Promise<IClaudeChatResult> => {
-        await initAnthropicClient();
-
-        try {
-            return await new Promise<IClaudeChatResult>((resolve, reject) => {
-                anthropic!.messages
-                    .stream({
-                        model: 'claude-3-5-sonnet-20240620',
-                        messages: [{ role: 'user', content: request.prompt }],
-                        stream: true,
-                        max_tokens: 1000, // Ensure max_tokens is provided
-                    })
-                    .on('text', (text) => {
-                        stream.markdown(text);
-                    })
-                    .on('error', (err) => {
-                        handleError(logger, err, stream);
-                        reject(err);
-                    })
-                    .on('finalMessage', () => {
-                        resolve({ metadata: { command: 'claude_chat' } });
-                    });
-            });
-        } catch (err) {
-            handleError(logger, err, stream);
-        }
-
-        logger.logUsage('request', { kind: 'claude' });
-        return { metadata: { command: 'claude_chat' } };
-    };
-
     const claude = vscode.chat.createChatParticipant(
         CLAUDE_PARTICIPANT_ID,
         handler
@@ -166,6 +125,41 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(claude);
 }
+const handler: vscode.ChatRequestHandler = async (
+    request: vscode.ChatRequest,
+    context: vscode.ChatContext,
+    stream: vscode.ChatResponseStream,
+    token: vscode.CancellationToken
+): Promise<IClaudeChatResult> => {
+    await initAnthropicClient();
+
+    try {
+        return await new Promise<IClaudeChatResult>((resolve, reject) => {
+            anthropic!.messages
+                .stream({
+                    model: 'claude-3-5-sonnet-20240620',
+                    messages: [{ role: 'user', content: request.prompt }],
+                    stream: true,
+                    max_tokens: 1000, // Ensure max_tokens is provided
+                })
+                .on('text', (text) => {
+                    stream.markdown(text);
+                })
+                .on('error', (err) => {
+                    handleError(logger, err, stream);
+                    reject(err);
+                })
+                .on('finalMessage', () => {
+                    resolve({ metadata: { command: 'claude_chat' } });
+                });
+        });
+    } catch (err) {
+        handleError(logger, err, stream);
+    }
+
+    logger.logUsage('request', { kind: 'claude' });
+    return { metadata: { command: 'claude_chat' } };
+};
 
 function handleError(
     logger: vscode.TelemetryLogger,

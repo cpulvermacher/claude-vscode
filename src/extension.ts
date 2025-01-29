@@ -3,9 +3,26 @@ import { Anthropic } from '@anthropic-ai/sdk'; // Import Anthropic SDK
 
 const CLAUDE_PARTICIPANT_ID = 'cpulvermacher.claude';
 
+// See https://docs.anthropic.com/en/docs/about-claude/models
+const claudeModel = {
+    model: 'claude-3-5-sonnet-20241022',
+    max_tokens: 8192,
+};
+
 interface IClaudeChatResult extends vscode.ChatResult {
     metadata: {
         command: string;
+    };
+}
+
+function createModelParams(
+    userPrompt: string,
+    stream?: boolean
+): Anthropic.MessageStreamParams {
+    return {
+        messages: [{ role: 'user', content: userPrompt }],
+        stream: stream ?? false,
+        ...claudeModel,
     };
 }
 
@@ -75,14 +92,7 @@ export async function activate(context: vscode.ExtensionContext) {
                     .map((msg) => msg.content)
                     .join(' ');
                 anthropic.messages
-                    .stream({
-                        model: 'claude-3-5-sonnet-20240620',
-                        messages: [
-                            { role: 'user', content: concatenatedContent },
-                        ],
-                        stream: true,
-                        max_tokens: 1000,
-                    })
+                    .stream(createModelParams(concatenatedContent, true))
                     .on('text', (text) => {
                         progress.report({ index: 0, part: text });
                     })
@@ -109,8 +119,8 @@ export async function activate(context: vscode.ExtensionContext) {
         name: 'Claude',
         family: 'claude',
         version: '3.5',
-        maxInputTokens: 4096,
-        maxOutputTokens: 1000,
+        maxInputTokens: 200000,
+        maxOutputTokens: claudeModel.max_tokens,
     };
 
     context.subscriptions.push(
@@ -125,6 +135,7 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(claude);
 }
+
 async function handler(
     request: vscode.ChatRequest,
     context: vscode.ChatContext,
@@ -133,12 +144,7 @@ async function handler(
     try {
         return await new Promise<IClaudeChatResult>((resolve, reject) => {
             anthropic!.messages
-                .stream({
-                    model: 'claude-3-5-sonnet-20240620',
-                    messages: [{ role: 'user', content: request.prompt }],
-                    stream: true,
-                    max_tokens: 1000, // Ensure max_tokens is provided
-                })
+                .stream(createModelParams(request.prompt, true))
                 .on('text', (text) => {
                     stream.markdown(text);
                 })

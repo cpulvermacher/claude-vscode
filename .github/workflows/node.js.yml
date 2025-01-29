@@ -25,4 +25,4 @@ jobs:
             - run: npm ci
             - run: npm run lint
             - run: npm audit --production
-            - run: npm run build --skip-license
+            - run: npm run build -- --skip-license

@@ -122,7 +122,7 @@ export async function activate(context: vscode.ExtensionContext) {
         )
     );
     vscode.lm.selectChatModels({ vendor: 'Anthropic' }).then((models) => {
-        console.log(`Selected models: ${models}`);
+        console.log(`Selected models: ${JSON.stringify(models)}`);
     });
     context.subscriptions.push(claude);
 }

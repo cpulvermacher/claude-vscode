@@ -15,15 +15,18 @@ interface IClaudeChatResult extends vscode.ChatResult {
     };
 }
 
-function createModelParams(
-    userPrompt: string,
-    stream?: boolean
-): Anthropic.MessageStreamParams {
+function createModelParamsStreaming(
+    userPrompt: string
+): Anthropic.MessageCreateParamsStreaming {
     return {
-        messages: [{ role: 'user', content: userPrompt }],
-        stream: stream ?? false,
+        messages: createMessages(userPrompt),
+        stream: true,
         ...claudeModel,
     };
+}
+
+function createMessages(userPrompt: string): Anthropic.MessageParam[] {
+    return [{ role: 'user', content: userPrompt }];
 }
 
 const logger = vscode.env.createTelemetryLogger({
@@ -92,7 +95,7 @@ export async function activate(context: vscode.ExtensionContext) {
                     .map((msg) => msg.content)
                     .join(' ');
                 anthropic.messages
-                    .stream(createModelParams(concatenatedContent, true))
+                    .stream(createModelParamsStreaming(concatenatedContent))
                     .on('text', (text) => {
                         progress.report({ index: 0, part: text });
                     })
@@ -104,13 +107,22 @@ export async function activate(context: vscode.ExtensionContext) {
                     });
             });
         },
-        provideTokenCount(text) {
-            if (typeof text === 'string') {
-                return Promise.resolve(text.length); // Simplified token count for string
-            } else {
-                const message = text as vscode.LanguageModelChatMessage;
-                return Promise.resolve(message.content.length); // Simplified token count for LanguageModelChatMessage
+        async provideTokenCount(text) {
+            if (!anthropic) {
+                throw new Error('Anthropic client is not initialized.');
             }
+
+            const prompt = typeof text === 'string' ? text : text.content;
+
+            const response = await anthropic.messages.countTokens({
+                messages: createMessages(prompt),
+                model: claudeModel.model,
+            });
+            if (!response) {
+                throw new Error('Failed to count tokens.');
+            }
+
+            return response.input_tokens;
         },
     };
 
@@ -144,7 +156,7 @@ async function handler(
     try {
         return await new Promise<IClaudeChatResult>((resolve, reject) => {
             anthropic!.messages
-                .stream(createModelParams(request.prompt, true))
+                .stream(createModelParamsStreaming(request.prompt))
                 .on('text', (text) => {
                     stream.markdown(text);
                 })

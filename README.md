@@ -1,3 +1,9 @@
+**WARNING** Since this uses proposed APIs, you need to install the extension .vsix manually, add
+```
+"enable-proposed-api": ["cpulvermacher.claude"]
+```
+to your `.vscode/argv.json` and restart VSCode. See the documentation on [Proposed APIs](https://code.visualstudio.com/api/advanced-topics/using-proposed-api) for more details.
+
 # Anthropic Claude Chat Extension for VS Code
 
 This Visual Studio Code extension integrates Anthropic's Claude chat capabilities directly into your development environment, allowing you to interact with the Claude Sonnet AI model without leaving your editor.

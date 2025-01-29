@@ -91,13 +91,17 @@ export async function activate(context: vscode.ExtensionContext) {
                     return;
                 }
 
-                const concatenatedContent = messages
-                    .map((msg) => msg.content)
-                    .join(' ');
+                const concatenatedContent = createPromptString(messages);
+
+                if (concatenatedContent.length === 0) {
+                    resolve('');
+                    return;
+                }
                 anthropic.messages
                     .stream(createModelParamsStreaming(concatenatedContent))
                     .on('text', (text) => {
-                        progress.report({ index: 0, part: text });
+                        const textPart = new vscode.LanguageModelTextPart(text);
+                        progress.report({ index: 0, part: textPart });
                     })
                     .on('error', (err) => {
                         reject(err);
@@ -112,7 +116,11 @@ export async function activate(context: vscode.ExtensionContext) {
                 throw new Error('Anthropic client is not initialized.');
             }
 
-            const prompt = typeof text === 'string' ? text : text.content;
+            const prompt = createPromptString(text);
+
+            if (prompt.length === 0) {
+                return 0;
+            }
 
             const response = await anthropic.messages.countTokens({
                 messages: createMessages(prompt),
@@ -189,6 +197,31 @@ function handleError(
         console.error('An unknown error occurred');
         stream.markdown('An unknown error occurred');
     }
+}
+
+function createPromptString(
+    messages:
+        | string
+        | vscode.LanguageModelChatMessage
+        | vscode.LanguageModelChatMessage[]
+): string {
+    if (typeof messages === 'string') {
+        return messages;
+    }
+    if (Array.isArray(messages)) {
+        return messages.map((msg) => createPromptString(msg)).join(' ');
+    }
+
+    return messages.content
+        .map((msg) => {
+            if (msg instanceof vscode.LanguageModelTextPart) {
+                return msg.value;
+            } else {
+                // for tool result/call parts, estimate the token count
+                return JSON.stringify(msg);
+            }
+        })
+        .join(' ');
 }
 
 export function deactivate() {}

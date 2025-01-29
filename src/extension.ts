@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { Anthropic } from '@anthropic-ai/sdk'; // Import Anthropic SDK
 
-const CLAUDE_PARTICIPANT_ID = 'vscode-samples.claude';
+const CLAUDE_PARTICIPANT_ID = 'cpulvermacher.claude';
 
 interface IClaudeChatResult extends vscode.ChatResult {
     metadata: {

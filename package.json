@@ -1,6 +1,6 @@
 {
 	"name": "claude",
-	"publisher": "vscode-samples",
+	"publisher": "cpulvermacher",
 	"displayName": "Claude",
 	"description": "Sample chat extension, a trusty cat tutor that will can teach you computer science topics.",
 	"repository": {
@@ -18,16 +18,18 @@
 	"enabledApiProposals": [
 		"chatProvider"
 	],
-	"activationEvents": ["onStartupFinished"],
+	"activationEvents": [
+		"onStartupFinished"
+	],
 	"contributes": {
-		"languageModels":[
+		"languageModels": [
 			{
 				"vendor": "Anthropic"
 			}
 		],
 		"chatParticipants": [
 			{
-				"id": "vscode-samples.claude",
+				"id": "cpulvermacher.claude",
 				"fullName": "Claude",
 				"name": "claude",
 				"description": "What do you need help with?",

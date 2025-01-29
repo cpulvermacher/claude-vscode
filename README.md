@@ -19,11 +19,7 @@ Before using this extension, you need to have an Anthropic API key. If you don't
 
 ## Setup
 
-1. Create a `.env` file in the root directory of your extension with your Anthropic API key:
-   ```
-   ANTHROPIC_API_KEY=your_api_key_here
-   ```
-2. If you prefer not to use a `.env` file, the extension will prompt you to enter your API key when you first use it.
+The extension will prompt you to enter your API key when you first use it.
 
 ## Usage
 

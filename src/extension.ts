@@ -22,22 +22,22 @@ const logger = vscode.env.createTelemetryLogger({
     },
 });
 
-// Initialize Anthropic client
 let anthropic: Anthropic | undefined;
 
-async function initAnthropicClient() {
+async function initAnthropicClient(context: vscode.ExtensionContext) {
     if (!anthropic) {
-        let apiKey = process.env.ANTHROPIC_API_KEY;
+        let apiKey = await context.secrets.get('claude.apiKey');
         if (!apiKey) {
             apiKey = await vscode.window.showInputBox({
                 prompt: 'Enter your Anthropic API Key',
                 ignoreFocusOut: true,
-                password: true,
             });
 
             if (!apiKey) {
                 throw new Error('API Key is required');
             }
+
+            await context.secrets.store('claude.apiKey', apiKey);
         }
         anthropic = new Anthropic({
             apiKey,
@@ -45,7 +45,9 @@ async function initAnthropicClient() {
     }
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+    await initAnthropicClient(context);
+
     const claude = vscode.chat.createChatParticipant(
         CLAUDE_PARTICIPANT_ID,
         handler
@@ -64,7 +66,6 @@ export function activate(context: vscode.ExtensionContext) {
             progress,
             token
         ) {
-            await initAnthropicClient();
             await new Promise((resolve, reject) => {
                 if (!anthropic) {
                     reject(new Error('Anthropic client is not initialized.'));
@@ -131,8 +132,6 @@ const handler: vscode.ChatRequestHandler = async (
     stream: vscode.ChatResponseStream,
     token: vscode.CancellationToken
 ): Promise<IClaudeChatResult> => {
-    await initAnthropicClient();
-
     try {
         return await new Promise<IClaudeChatResult>((resolve, reject) => {
             anthropic!.messages

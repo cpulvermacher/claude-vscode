@@ -8,6 +8,7 @@ const claudeModel = {
     model: 'claude-3-5-sonnet-20241022',
     max_tokens: 8192,
 };
+const maxInputTokens = 200000;
 
 interface IClaudeChatResult extends vscode.ChatResult {
     metadata: {
@@ -139,7 +140,7 @@ export async function activate(context: vscode.ExtensionContext) {
         name: 'Claude',
         family: 'claude',
         version: '3.5',
-        maxInputTokens: 200000,
+        maxInputTokens: maxInputTokens,
         maxOutputTokens: claudeModel.max_tokens,
     };
 

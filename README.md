@@ -1,4 +1,6 @@
-**WARNING** Since this uses proposed APIs, you need to install the extension .vsix manually, add
+**Note** Since this uses proposed APIs, you need to install the extension .vsix manually.
+This only allows using the @claude chat participant (requires Copilot Chat to be enabled and logged in to enable the Chat window).
+If you want the chat model to be available via `vscode.lm.selectChatModels()`, add
 ```
 "enable-proposed-api": ["cpulvermacher.claude"]
 ```

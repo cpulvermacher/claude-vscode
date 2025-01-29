@@ -63,8 +63,7 @@ export async function activate(context: vscode.ExtensionContext) {
             messages,
             options,
             extensionId,
-            progress,
-            token
+            progress
         ) {
             await new Promise((resolve, reject) => {
                 if (!anthropic) {
@@ -95,7 +94,7 @@ export async function activate(context: vscode.ExtensionContext) {
                     });
             });
         },
-        provideTokenCount(text, token) {
+        provideTokenCount(text) {
             if (typeof text === 'string') {
                 return Promise.resolve(text.length); // Simplified token count for string
             } else {
@@ -126,12 +125,11 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(claude);
 }
-const handler: vscode.ChatRequestHandler = async (
+async function handler(
     request: vscode.ChatRequest,
     context: vscode.ChatContext,
-    stream: vscode.ChatResponseStream,
-    token: vscode.CancellationToken
-): Promise<IClaudeChatResult> => {
+    stream: vscode.ChatResponseStream
+): Promise<IClaudeChatResult> {
     try {
         return await new Promise<IClaudeChatResult>((resolve, reject) => {
             anthropic!.messages
@@ -158,16 +156,15 @@ const handler: vscode.ChatRequestHandler = async (
 
     logger.logUsage('request', { kind: 'claude' });
     return { metadata: { command: 'claude_chat' } };
-};
+}
 
 function handleError(
     logger: vscode.TelemetryLogger,
-    err: any,
+    err: unknown,
     stream: vscode.ChatResponseStream
 ): void {
-    logger.logError(err);
-
     if (err instanceof Error) {
+        logger.logError(err);
         console.error(err.message);
         stream.markdown(`An error occurred: ${err.message}`);
     } else {

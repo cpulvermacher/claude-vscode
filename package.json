@@ -9,7 +9,7 @@
 	},
 	"version": "0.1.0",
 	"engines": {
-		"vscode": "^1.92.0"
+		"vscode": "^1.96.0"
 	},
 	"categories": [
 		"AI",
@@ -52,7 +52,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^20.5.9",
-		"@types/vscode": "1.90.0",
+		"@types/vscode": "1.96.0",
 		"@typescript-eslint/eslint-plugin": "^7.14.0",
 		"@typescript-eslint/parser": "^7.14.0",
 		"@vscode/vsce": "^3.2.1",

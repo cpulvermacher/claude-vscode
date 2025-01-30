@@ -80,9 +80,6 @@ export async function activate(context: vscode.ExtensionContext) {
             chatResponseProviderMetadata
         )
     );
-    vscode.lm.selectChatModels({ vendor: 'Anthropic' }).then((models) => {
-        console.log(`Selected models: ${JSON.stringify(models)}`);
-    });
 }
 
 async function handler(

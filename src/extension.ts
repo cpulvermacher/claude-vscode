@@ -16,20 +16,6 @@ interface IClaudeChatResult extends vscode.ChatResult {
     };
 }
 
-function createModelParamsStreaming(
-    userPrompt: string
-): Anthropic.MessageCreateParamsStreaming {
-    return {
-        messages: createMessages(userPrompt),
-        stream: true,
-        ...claudeModel,
-    };
-}
-
-function createMessages(userPrompt: string): Anthropic.MessageParam[] {
-    return [{ role: 'user', content: userPrompt }];
-}
-
 const logger = vscode.env.createTelemetryLogger({
     sendEventData(eventName, data) {
         // Capture event telemetry
@@ -185,19 +171,18 @@ async function handler(
     return { metadata: { command: 'claude_chat' } };
 }
 
-function handleError(
-    logger: vscode.TelemetryLogger,
-    err: unknown,
-    stream: vscode.ChatResponseStream
-): void {
-    if (err instanceof Error) {
-        logger.logError(err);
-        console.error(err.message);
-        stream.markdown(`An error occurred: ${err.message}`);
-    } else {
-        console.error('An unknown error occurred');
-        stream.markdown('An unknown error occurred');
-    }
+function createModelParamsStreaming(
+    userPrompt: string
+): Anthropic.MessageCreateParamsStreaming {
+    return {
+        messages: createMessages(userPrompt),
+        stream: true,
+        ...claudeModel,
+    };
+}
+
+function createMessages(userPrompt: string): Anthropic.MessageParam[] {
+    return [{ role: 'user', content: userPrompt }];
 }
 
 function createPromptString(
@@ -223,6 +208,21 @@ function createPromptString(
             }
         })
         .join(' ');
+}
+
+function handleError(
+    logger: vscode.TelemetryLogger,
+    err: unknown,
+    stream: vscode.ChatResponseStream
+): void {
+    if (err instanceof Error) {
+        logger.logError(err);
+        console.error(err.message);
+        stream.markdown(`An error occurred: ${err.message}`);
+    } else {
+        console.error('An unknown error occurred');
+        stream.markdown('An unknown error occurred');
+    }
 }
 
 export function deactivate() {}

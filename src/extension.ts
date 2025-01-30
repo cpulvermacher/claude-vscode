@@ -9,6 +9,14 @@ const claudeModel = {
     max_tokens: 8192,
 };
 const maxInputTokens = 200000;
+const chatResponseProviderMetadata: vscode.ChatResponseProviderMetadata = {
+    vendor: 'Anthropic',
+    name: 'Claude',
+    family: 'claude',
+    version: '3.5',
+    maxInputTokens: maxInputTokens,
+    maxOutputTokens: claudeModel.max_tokens,
+};
 
 interface IClaudeChatResult extends vscode.ChatResult {
     metadata: {
@@ -63,84 +71,18 @@ export async function activate(context: vscode.ExtensionContext) {
         context.extensionUri,
         'anthropic-icon.png'
     ); // Update icon if needed
-
-    // Register Language Model Provider
-    const languageModelProvider: vscode.LanguageModelChatProvider = {
-        async provideLanguageModelResponse(
-            messages,
-            options,
-            extensionId,
-            progress
-        ) {
-            await new Promise((resolve, reject) => {
-                if (!anthropic) {
-                    reject(new Error('Anthropic client is not initialized.'));
-                    return;
-                }
-
-                const concatenatedContent = createPromptString(messages);
-
-                if (concatenatedContent.length === 0) {
-                    resolve('');
-                    return;
-                }
-                anthropic.messages
-                    .stream(createModelParamsStreaming(concatenatedContent))
-                    .on('text', (text) => {
-                        const textPart = new vscode.LanguageModelTextPart(text);
-                        progress.report({ index: 0, part: textPart });
-                    })
-                    .on('error', (err) => {
-                        reject(err);
-                    })
-                    .on('finalMessage', () => {
-                        resolve('');
-                    });
-            });
-        },
-        async provideTokenCount(text) {
-            if (!anthropic) {
-                throw new Error('Anthropic client is not initialized.');
-            }
-
-            const prompt = createPromptString(text);
-
-            if (prompt.length === 0) {
-                return 0;
-            }
-
-            const response = await anthropic.messages.countTokens({
-                messages: createMessages(prompt),
-                model: claudeModel.model,
-            });
-            if (!response) {
-                throw new Error('Failed to count tokens.');
-            }
-
-            return response.input_tokens;
-        },
-    };
-
-    const metadata: vscode.ChatResponseProviderMetadata = {
-        vendor: 'Anthropic',
-        name: 'Claude',
-        family: 'claude',
-        version: '3.5',
-        maxInputTokens: maxInputTokens,
-        maxOutputTokens: claudeModel.max_tokens,
-    };
+    context.subscriptions.push(claude);
 
     context.subscriptions.push(
         vscode.lm.registerChatModelProvider(
             'anthropic.claude',
             languageModelProvider,
-            metadata
+            chatResponseProviderMetadata
         )
     );
     vscode.lm.selectChatModels({ vendor: 'Anthropic' }).then((models) => {
         console.log(`Selected models: ${JSON.stringify(models)}`);
     });
-    context.subscriptions.push(claude);
 }
 
 async function handler(
@@ -170,6 +112,61 @@ async function handler(
     logger.logUsage('request', { kind: 'claude' });
     return { metadata: { command: 'claude_chat' } };
 }
+
+const languageModelProvider: vscode.LanguageModelChatProvider = {
+    async provideLanguageModelResponse(
+        messages,
+        options,
+        extensionId,
+        progress
+    ) {
+        await new Promise((resolve, reject) => {
+            if (!anthropic) {
+                reject(new Error('Anthropic client is not initialized.'));
+                return;
+            }
+
+            const concatenatedContent = createPromptString(messages);
+            if (concatenatedContent.length === 0) {
+                resolve('');
+                return;
+            }
+            anthropic.messages
+                .stream(createModelParamsStreaming(concatenatedContent))
+                .on('text', (text) => {
+                    const textPart = new vscode.LanguageModelTextPart(text);
+                    progress.report({ index: 0, part: textPart });
+                })
+                .on('error', (err) => {
+                    reject(err);
+                })
+                .on('finalMessage', () => {
+                    resolve('');
+                });
+        });
+    },
+    async provideTokenCount(text) {
+        if (!anthropic) {
+            throw new Error('Anthropic client is not initialized.');
+        }
+
+        const prompt = createPromptString(text);
+
+        if (prompt.length === 0) {
+            return 0;
+        }
+
+        const response = await anthropic.messages.countTokens({
+            messages: createMessages(prompt),
+            model: claudeModel.model,
+        });
+        if (!response) {
+            throw new Error('Failed to count tokens.');
+        }
+
+        return response.input_tokens;
+    },
+};
 
 function createModelParamsStreaming(
     userPrompt: string
